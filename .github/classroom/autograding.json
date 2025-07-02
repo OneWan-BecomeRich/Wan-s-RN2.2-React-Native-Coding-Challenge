@@ -1,0 +1,104 @@
+{
+  "tests": [
+    {
+      "name": "sendPushNotification - correct fields",
+      "setup": "",
+      "run": "npm test -- -t 'should send the a message with the correct fields'",
+      "input": "",
+      "output": "",
+      "comparison": "exact",
+      "timeout": 20,
+      "points": 20
+    },
+    {
+      "name": "sendPushNotification - POST request",
+      "setup": "",
+      "run": "npm test -- -t 'should send a POST request'",
+      "input": "",
+      "output": "",
+      "comparison": "exact",
+      "timeout": 20,
+      "points": 20
+    },
+    {
+      "name": "sendPushNotification - correct URL",
+      "setup": "",
+      "run": "npm test -- -t 'should send a request to the correct URL'",
+      "input": "",
+      "output": "",
+      "comparison": "exact",
+      "timeout": 20,
+      "points": 20
+    },
+    {
+      "name": "getPushToken - GET request",
+      "setup": "",
+      "run": "npm test -- -t 'should send a GET request'",
+      "input": "",
+      "output": "",
+      "comparison": "exact",
+      "timeout": 20,
+      "points": 20
+    },
+    {
+      "name": "getPushToken - correct URL",
+      "setup": "",
+      "run": "npm test -- -t 'should send a request to the correct URL'",
+      "input": "",
+      "output": "",
+      "comparison": "exact",
+      "timeout": 20,
+      "points": 20
+    },
+    {
+      "name": "getPushToken - returns push token",
+      "setup": "",
+      "run": "npm test -- -t 'should return the push token from the response'",
+      "input": "",
+      "output": "",
+      "comparison": "exact",
+      "timeout": 20,
+      "points": 20
+    },
+    {
+      "name": "savePushTokenToAPI - calls getPushToken",
+      "setup": "",
+      "run": "npm test -- -t 'should call getPushToken to retrieve the old token'",
+      "input": "",
+      "output": "",
+      "comparison": "exact",
+      "timeout": 20,
+      "points": 20
+    },
+    {
+      "name": "savePushTokenToAPI - PATCH request",
+      "setup": "",
+      "run": "npm test -- -t 'should send a PATCH request'",
+      "input": "",
+      "output": "",
+      "comparison": "exact",
+      "timeout": 20,
+      "points": 20
+    },
+    {
+      "name": "savePushTokenToAPI - correct URL",
+      "setup": "",
+      "run": "npm test -- -t 'should send a request to the correct URL'",
+      "input": "",
+      "output": "",
+      "comparison": "exact",
+      "timeout": 20,
+      "points": 20
+    },
+    {
+      "name": "Full functionality - sends push notification when button pressed",
+      "setup": "",
+      "run": "npm test -- -t 'sends a push notification when the button is pressed'",
+      "input": "",
+      "output": "",
+      "comparison": "exact",
+      "timeout": 20,
+      "points": 20
+    }
+  ]
+}
