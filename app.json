@@ -16,16 +16,23 @@
       "supportsTablet": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "bundleIdentifier": "com.onewan.rn2codechallenge2"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/STEDI-Icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.onewan.rn2codechallenge2"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "8b373575-ec34-402c-9025-b74d86c93709"
+      }
     }
   }
 }

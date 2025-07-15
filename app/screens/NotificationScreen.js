@@ -6,16 +6,28 @@ import * as Notifications from 'expo-notifications';
 import {useThemeStyles} from '../components/Styles';
 import {useLoginContext} from '../components/LoginContext';
 
-/* TODO:
- *  - Add support for notifications by adding these functions from the example code:
- *     - Notifications.setNotificationHandler
- *     - sendPushNotification
- *        - Export this function (for testing purposes)
- *        - Include 'username' in the data object
- *     - handleRegistrationError
- *     - registerForPushNotificationsAsync
- *  - Finish building out the other functions according to the comments below
+/**
+ * Sends a push notification to a given Expo push token.
+ * @param {string} pushToken - The Expo push token of the recipient
+ * @param {string} username - The username of the sender (to include in data)
  */
+export const sendPushNotification = async (pushToken, username) => {
+    await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Accept-encoding': 'gzip, deflate',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            to: pushToken,
+            sound: 'default',
+            title: 'STEDI Data Shared',
+            body: `${username} has shared their STEDI data with you!`,
+            data: { username },
+        }),
+    });
+};
 
 /** Retrieves the push token for a given user from the API
  * @param {string} username - The username of the target user to get the push token for
@@ -23,12 +35,17 @@ import {useLoginContext} from '../components/LoginContext';
  * @returns {Promise<string|null>} - The push token for the target user, or null if it does not exist
  */
 export const getPushToken = async (username, sessionToken) => {
-    /* TODO:
-     *  - Make a GET request to https://dev.stedi.me/pushtokentestonly/{username}
-     *  - Include 'suresteps.session.token' in the headers
-     */
-    return null;
-}
+    const response = await fetch(`https://dev.stedi.me/pushtokentestonly/${username}`, {
+        method: 'GET',
+        headers: {
+            'suresteps.session.token': sessionToken,
+        },
+    });
+    const data = await response.json();
+    console.log('getPushToken response data:', data);
+    if (typeof data === 'string') return data;
+    return data.token || data.expoPushToken || undefined;
+};
 
 /** Saves the push token to the API for a given user.
  * @param userName - The username of the user to save the push token for
@@ -36,14 +53,49 @@ export const getPushToken = async (username, sessionToken) => {
  * @param pushToken - The user's current push token
  */
 export const savePushTokenToAPI = async (userName, sessionToken, pushToken) => {
-    /* TODO:
-     *  - Check if the push token is already saved for the user by calling getPushToken
-     *  - If the current push token is different from the one in the API, update it:
-     *     - Make a PATCH request to https://dev.stedi.me/user/{userName}
-     *     - Include 'suresteps.session.token' in the headers
-     *     - Include 'expoPushToken' in the body
-     */
+    const oldToken = await getPushToken(userName, sessionToken);
+    if (oldToken !== pushToken) {
+        await fetch(`https://dev.stedi.me/pushtokentestonly/${userName}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'suresteps.session.token': sessionToken,
+            },
+            body: JSON.stringify({ expoPushToken: pushToken }),
+        });
+    }
+};
+
+function handleRegistrationError(error) {
+    alert('Failed to register for push notifications: ' + error.message);
 }
+
+async function registerForPushNotificationsAsync() {
+    let token;
+    if (Device.isDevice) {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== 'granted') {
+            const { status } = await Notifications.requestPermissionsAsync();
+            finalStatus = status;
+        }
+        if (finalStatus !== 'granted') {
+            throw new Error('Permission not granted for push notifications!');
+        }
+        token = (await Notifications.getExpoPushTokenAsync()).data;
+    } else {
+        throw new Error('Must use physical device for Push Notifications');
+    }
+    return token;
+}
+
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+    }),
+});
 
 export default function NotificationScreen() {
     const [notification, setNotification] = useState(null);
@@ -52,22 +104,32 @@ export default function NotificationScreen() {
     const {userName, sessionToken} = useLoginContext();
 
     useEffect(() => {
-        /* TODO:
-         *  Add the code from the useEffect in the example code here, but instead of calling setExpoPushToken after
-         *  registerForPushNotificationsAsync, save the new push token to the API using savePushTokenToAPI.
-         */
-        console.warn('TODO: Implement push notification registration and saving token to API');
+        (async () => {
+            try {
+                const token = await registerForPushNotificationsAsync();
+                await savePushTokenToAPI(userName, sessionToken, token);
+            } catch (e) {
+                handleRegistrationError(e);
+            }
+        })();
     }, []);
 
     /** Sends a push notification to the physician with the user's name. */
     const sendDataToPhysician = async () => {
-        /* TODO:
-         *  - Start by setting 'sending' to true (this will disable the button temporarily)
-         *  - Retrieve the physician's push token using getPushToken
-         *  - Send a push notification to the physician using sendPushNotification
-         *  - Finally, change 'sending' back to false
-         */
-    }
+        setSending(true);
+        try {
+            // Replace 'physician' with the actual physician's username if needed
+            const physicianUserName = 'physician';
+            const physicianPushToken = await getPushToken(physicianUserName, sessionToken);
+            if (physicianPushToken) {
+                await sendPushNotification(physicianPushToken, userName);
+            } else {
+                console.warn('Physician push token not found.');
+            }
+        } finally {
+            setSending(false);
+        }
+    };
 
     return (
         <View style={[styles.container, {justifyContent: 'space-between'}]}>

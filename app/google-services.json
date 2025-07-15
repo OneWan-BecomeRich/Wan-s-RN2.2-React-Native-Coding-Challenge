@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "188022270370",
+    "project_id": "cs420-example-a0d50",
+    "storage_bucket": "cs420-example-a0d50.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:188022270370:android:e4bef84fa00bdbee086afb",
+        "android_client_info": {
+          "package_name": "com.onewan.rn2codechallenge2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7bKR7EGpdugNQD_virq0oeoAFha6rs3M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
