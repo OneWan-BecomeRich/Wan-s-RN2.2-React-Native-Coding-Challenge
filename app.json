@@ -24,7 +24,8 @@
         "foregroundImage": "./assets/images/STEDI-Icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.onewan.rn2codechallenge2"
+      "package": "com.onewan.rn2codechallenge2",
+      "googleServicesFile": "./app/google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
