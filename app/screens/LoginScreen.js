@@ -27,7 +27,7 @@ const LoginScreen = () => {
 
         // Send a POST request to the login endpoint
         try {
-            const response = await fetch('https://dev.stedi.me/login', {
+            const response = await fetch('https://cs420.vercel.app/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/text',

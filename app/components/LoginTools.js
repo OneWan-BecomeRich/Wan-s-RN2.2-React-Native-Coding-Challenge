@@ -8,7 +8,7 @@ export const getSessionToken = async () => {
     console.info('sessionToken:', sessionToken);
 
     if (sessionToken) {
-        const validateResponse = await fetch('https://dev.stedi.me/validate/' + sessionToken,
+        const validateResponse = await fetch('https://cs420.vercel.app/validate/' + sessionToken,
             {
                 method: 'GET',
                 headers: {
@@ -40,7 +40,7 @@ export async function handleLogout(setLoggedIn) {
 // Delete the user's account by sending a DELETE request to the server
 export function handleDeleteUser() {
     const {userName, sessionToken, setLoggedIn} = useLoginContext();
-    fetch('https://dev.stedi.me/user/' + userName,
+    fetch('https://cs420.vercel.app/user/' + userName,
         {
             method: 'DELETE',
             headers: {

@@ -98,8 +98,8 @@ describe('getPushToken function', () => {
     });
     it('should send a request to the correct URL', async () => {
         await NotificationScreenModule.getPushToken('myUser', 'session-token');
-        if (!fetch.mock.calls[0][0] || fetch.mock.calls[0][0] !== 'https://dev.stedi.me/pushtokentestonly/myUser') addTestError('[getPushToken] Fetch URL should be https://dev.stedi.me/pushtokentestonly/{username}');
-        expect(fetch.mock.calls[0][0]).toBe('https://dev.stedi.me/pushtokentestonly/myUser');
+        if (!fetch.mock.calls[0][0] || fetch.mock.calls[0][0] !== 'https://cs420.vercel.app/pushtokentestonly/myUser') addTestError('[getPushToken] Fetch URL should be https://cs420.vercel.app/pushtokentestonly/{username}');
+        expect(fetch.mock.calls[0][0]).toBe('https://cs420.vercel.app/pushtokentestonly/myUser');
     });
     it('should return the push token from the response', async () => {
         const result = await NotificationScreenModule.getPushToken('myUser', 'session-token');
@@ -138,8 +138,8 @@ describe('savePushTokenToAPI function', () => {
     it('should send a request to the correct URL', async () => {
         jest.spyOn(NotificationScreenModule, 'getPushToken').mockImplementation(async () => 'oldToken');
         await NotificationScreenModule.savePushTokenToAPI('myUser', 'session-token', 'newToken');
-        if (!fetch.mock.calls[0][0] || fetch.mock.calls[0][0] !== 'https://dev.stedi.me/pushtokentestonly/myUser') addTestError('[savePushTokenToAPI] Fetch URL should be https://dev.stedi.me/pushtokentestonly/{username}');
-        expect(fetch.mock.calls[0][0]).toBe('https://dev.stedi.me/pushtokentestonly/myUser');
+        if (!fetch.mock.calls[0][0] || fetch.mock.calls[0][0] !== 'https://cs420.vercel.app/pushtokentestonly/myUser') addTestError('[savePushTokenToAPI] Fetch URL should be https://cs420.vercel.app/pushtokentestonly/{username}');
+        expect(fetch.mock.calls[0][0]).toBe('https://cs420.vercel.app/pushtokentestonly/myUser');
     });
 });
 

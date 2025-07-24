@@ -1,10 +1,84 @@
 import {useState, useEffect} from 'react';
-import {Text, View, TouchableOpacity, Platform} from 'react-native';
+import {Text, View, TouchableOpacity, Platform, Alert, ScrollView} from 'react-native';
 import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from 'expo-notifications';
 import {useThemeStyles} from '../components/Styles';
 import {useLoginContext} from '../components/LoginContext';
+
+const API_URL = 'https://cs420.vercel.app';
+
+/**
+ * Creates a clinician access request
+ * @param {string} clinicianUsername - The username of the clinician
+ * @param {string} customerEmail - The email of the customer
+ * @param {string} sessionToken - The session token for authentication
+ */
+export const createClinicianAccessRequest = async (clinicianUsername, customerEmail, sessionToken) => {
+    const response = await fetch(`${API_URL}/clinicianAccessRequest`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'suresteps.session.token': sessionToken,
+        },
+        body: JSON.stringify({
+            clinicianUsername,
+            customerEmail,
+        }),
+    });
+    
+    if (!response.ok) {
+        throw new Error(`Failed to create access request: ${response.status}`);
+    }
+    
+    return response.text();
+};
+
+/**
+ * Gets all clinician access requests for a customer
+ * @param {string} customerEmail - The email of the customer
+ * @param {string} sessionToken - The session token for authentication
+ */
+export const getClinicianAccessRequests = async (customerEmail, sessionToken) => {
+    const response = await fetch(`${API_URL}/clinicianAccessRequests/${encodeURIComponent(customerEmail)}`, {
+        method: 'GET',
+        headers: {
+            'suresteps.session.token': sessionToken,
+        },
+    });
+    
+    if (!response.ok) {
+        throw new Error(`Failed to get access requests: ${response.status}`);
+    }
+    
+    return response.json();
+};
+
+/**
+ * Deletes a clinician access request
+ * @param {string} clinicianUsername - The username of the clinician
+ * @param {string} customerEmail - The email of the customer
+ * @param {string} sessionToken - The session token for authentication
+ */
+export const deleteClinicianAccessRequest = async (clinicianUsername, customerEmail, sessionToken) => {
+    const response = await fetch(`${API_URL}/clinicianAccessRequest`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'suresteps.session.token': sessionToken,
+        },
+        body: JSON.stringify({
+            clinicianUsername,
+            customerEmail,
+        }),
+    });
+    
+    if (!response.ok) {
+        throw new Error(`Failed to delete access request: ${response.status}`);
+    }
+    
+    return response.text();
+};
 
 /**
  * Sends a push notification to a given Expo push token.
@@ -35,7 +109,7 @@ export const sendPushNotification = async (pushToken, username) => {
  * @returns {Promise<string|null>} - The push token for the target user, or null if it does not exist
  */
 export const getPushToken = async (username, sessionToken) => {
-    const response = await fetch(`https://dev.stedi.me/pushtokentestonly/${username}`, {
+    const response = await fetch(`${API_URL}/pushtokentestonly/${username}`, {
         method: 'GET',
         headers: {
             'suresteps.session.token': sessionToken,
@@ -55,7 +129,7 @@ export const getPushToken = async (username, sessionToken) => {
 export const savePushTokenToAPI = async (userName, sessionToken, pushToken) => {
     const oldToken = await getPushToken(userName, sessionToken);
     if (oldToken !== pushToken) {
-        await fetch(`https://dev.stedi.me/pushtokentestonly/${userName}`, {
+        await fetch(`${API_URL}/pushtokentestonly/${userName}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -100,6 +174,8 @@ Notifications.setNotificationHandler({
 export default function NotificationScreen() {
     const [notification, setNotification] = useState(null);
     const [sending, setSending] = useState(false);
+    const [accessRequests, setAccessRequests] = useState([]);
+    const [loadingRequests, setLoadingRequests] = useState(false);
     const styles = useThemeStyles();
     const {userName, sessionToken} = useLoginContext();
 
@@ -108,11 +184,39 @@ export default function NotificationScreen() {
             try {
                 const token = await registerForPushNotificationsAsync();
                 await savePushTokenToAPI(userName, sessionToken, token);
+                // Load access requests
+                await loadAccessRequests();
             } catch (e) {
                 handleRegistrationError(e);
             }
         })();
     }, []);
+
+    const loadAccessRequests = async () => {
+        if (!userName) return;
+        
+        setLoadingRequests(true);
+        try {
+            const requests = await getClinicianAccessRequests(userName, sessionToken);
+            setAccessRequests(requests);
+        } catch (error) {
+            console.error('Error loading access requests:', error);
+            Alert.alert('Error', 'Failed to load access requests');
+        } finally {
+            setLoadingRequests(false);
+        }
+    };
+
+    const handleDeleteRequest = async (clinicianUsername) => {
+        try {
+            await deleteClinicianAccessRequest(clinicianUsername, userName, sessionToken);
+            Alert.alert('Success', 'Access request deleted successfully');
+            await loadAccessRequests(); // Reload the list
+        } catch (error) {
+            console.error('Error deleting access request:', error);
+            Alert.alert('Error', 'Failed to delete access request');
+        }
+    };
 
     /** Sends a push notification to the physician with the user's name. */
     const sendDataToPhysician = async () => {
@@ -132,25 +236,60 @@ export default function NotificationScreen() {
     };
 
     return (
-        <View style={[styles.container, {justifyContent: 'space-between'}]}>
-            <View>
-                <Text style={styles.title}>Share Your Data with a Physician</Text>
-                <Text style={styles.text}>
-                    Before you can receive a personalized health assessment, please share your STEDI data with your
-                    physician. This allows them to review your results, monitor key health indicators, and provide
-                    expert recommendations tailored to your needs.
-                </Text>
-                {notification !== null &&
-                    <View style={[styles.textInput, {marginTop: 30, padding: 20}]}>
-                        <Text style={[styles.largeText, {marginBottom: 10}]}>{notification.request.content.title}</Text>
-                        <Text style={styles.text}>{notification.request.content.body}</Text>
-                        <Text style={styles.text}>Last updated at: {new Date(notification.date).toLocaleString()}</Text>
+        <ScrollView style={styles.container}>
+            <View style={{justifyContent: 'space-between', paddingBottom: 50}}>
+                <View>
+                    <Text style={styles.title}>Share Your Data with a Physician</Text>
+                    <Text style={styles.text}>
+                        Before you can receive a personalized health assessment, please share your STEDI data with your
+                        physician. This allows them to review your results, monitor key health indicators, and provide
+                        expert recommendations tailored to your needs.
+                    </Text>
+                    
+                    {/* Access Requests Section */}
+                    <View style={{marginTop: 30}}>
+                        <Text style={[styles.title, {fontSize: 20}]}>Access Requests</Text>
+                        {loadingRequests ? (
+                            <Text style={styles.text}>Loading requests...</Text>
+                        ) : accessRequests.length > 0 ? (
+                            accessRequests.map((request, index) => (
+                                <View key={index} style={[styles.textInput, {marginTop: 10, padding: 15}]}>
+                                    <Text style={styles.text}>
+                                        <Text style={{fontWeight: 'bold'}}>Clinician:</Text> {request.clinicianUsername}
+                                    </Text>
+                                    <Text style={styles.text}>
+                                        <Text style={{fontWeight: 'bold'}}>Status:</Text> {request.status}
+                                    </Text>
+                                    <Text style={styles.text}>
+                                        <Text style={{fontWeight: 'bold'}}>Date:</Text> {request.requestDate}
+                                    </Text>
+                                    {request.status === 'pending' && (
+                                        <TouchableOpacity 
+                                            style={[styles.button, {marginTop: 10, backgroundColor: '#ff4444'}]}
+                                            onPress={() => handleDeleteRequest(request.clinicianUsername)}
+                                        >
+                                            <Text style={styles.buttonText}>Delete Request</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                            ))
+                        ) : (
+                            <Text style={styles.text}>No access requests found.</Text>
+                        )}
                     </View>
-                }
+
+                    {notification !== null &&
+                        <View style={[styles.textInput, {marginTop: 30, padding: 20}]}>
+                            <Text style={[styles.largeText, {marginBottom: 10}]}>{notification.request.content.title}</Text>
+                            <Text style={styles.text}>{notification.request.content.body}</Text>
+                            <Text style={styles.text}>Last updated at: {new Date(notification.date).toLocaleString()}</Text>
+                        </View>
+                    }
+                </View>
+                <TouchableOpacity onPress={sendDataToPhysician} style={styles.button} disabled={sending}>
+                    <Text style={styles.buttonText}>{sending ? 'Sending...' : 'Send Data to a Physician'}</Text>
+                </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={sendDataToPhysician} style={styles.button} disabled={sending}>
-                <Text style={styles.buttonText}>{sending ? 'Sending...' : 'Send Data to a Physician'}</Text>
-            </TouchableOpacity>
-        </View>
+        </ScrollView>
     );
 }
