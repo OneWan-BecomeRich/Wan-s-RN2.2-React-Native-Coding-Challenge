@@ -16,7 +16,7 @@ export const sendPushNotification = async (pushToken, username) => {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
-            'Accept-encoding': 'gzip, deflate',
+            'Accept-Encoding': 'gzip, deflate',
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
